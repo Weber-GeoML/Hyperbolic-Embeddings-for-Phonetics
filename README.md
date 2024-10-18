@@ -189,8 +189,6 @@ visualization.plot_aligned_digit_centroids(
 
 ## Citation and Reference
 
-<mark>***TODO: change citation to reflect publishing status of paper as we go***</mark>
-
 If you find this repo useful in your own research, please cite it with the following reference:
 
 ```
