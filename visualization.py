@@ -12,6 +12,7 @@ import matplotlib.patches as mpatches
 from typing import Dict, List
 from scipy.linalg import eig
 from copy import deepcopy
+from seaborn import heatmap, color_palette
 
 
 def plot_spectrogram(
@@ -801,6 +802,56 @@ def plot_aligned_digit_centroids(
     plt.show()
 
 
+def plot_heatmap(
+    dist_dict: dict,
+    title: str,
+):
+    """Generates a heatmap of distances in a given language family.
+
+    Args:
+        dist_dict (dict): A dictionary of language distances of the following form:
+
+        {
+            "lang1": {
+                "lang1": None,
+                "lang2": <float dist>,
+                "lang3": <float dist>,
+            },
+            "lang2": {
+                "lang1": <float dist>,
+                "lang2": None,
+                "lang3": <float dist>,
+            }
+            ...
+        }
+
+        title (str): The title of the plot.
+    """
+    data = np.array(
+        [
+            [x if x is not None else np.nan for x in v.values()]
+            for v in dist_dict.values()
+        ]
+    )
+
+    ax = (
+        heatmap(
+            data,
+            cmap=color_palette("Blues", as_cmap=True),
+            xticklabels=list(dist_dict.keys()),
+            yticklabels=list(dist_dict.keys()),
+            annot=True,
+            fmt=".3f",
+        ),
+    )
+
+    plt.title(
+        title,
+    )
+
+    plt.show()
+
+
 def minmax_scale_dict(
     d: dict,
 ):
@@ -811,11 +862,13 @@ def minmax_scale_dict(
 
         {
             "lang1": {
+                "lang1": None,
                 "lang2": <float dist>,
                 "lang3": <float dist>,
             },
             "lang2": {
                 "lang1": <float dist>,
+                "lang2": None,
                 "lang3": <float dist>,
             }
             ...
@@ -859,11 +912,13 @@ def get_mse(
 
         {
             "lang1": {
+                "lang1": None,
                 "lang2": <float dist>,
                 "lang3": <float dist>,
             },
             "lang2": {
                 "lang1": <float dist>,
+                "lang2": None,
                 "lang3": <float dist>,
             }
             ...
@@ -909,16 +964,37 @@ def compare_lang_space_divergence(
         hyperparam_range (range): A range of k values for which the divergences will be tested.
         title (str): The title of the resulting plot.
 
-        The dictionaries should have the following form:
+        cov_dist_dict should have the following form:
 
         {
             "lang1": {
+                "lang1": None,
                 "lang2": <float dist>,
                 "lang3": <float dist>,
             },
             "lang2": {
                 "lang1": <float dist>,
+                "lang2": None,
                 "lang3": <float dist>,
+            }
+            ...
+        }
+
+        poincare_dist_dict should have the following form:
+
+        {
+            <integer k value>: {
+                "lang1": {
+                    "lang1": None,
+                    "lang2": <float dist>,
+                    "lang3": <float dist>,
+                },
+                "lang2": {
+                    "lang1": <float dist>,
+                    "lang2": None,
+                    "lang3": <float dist>,
+                }
+                ...
             }
             ...
         }
