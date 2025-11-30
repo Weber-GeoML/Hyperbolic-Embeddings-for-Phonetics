@@ -11,6 +11,8 @@ from matplotlib.ticker import LinearLocator
 import matplotlib.patches as mpatches
 from typing import Dict, List
 from scipy.linalg import eig
+from copy import deepcopy
+from seaborn import heatmap, color_palette
 
 
 def plot_spectrogram(
@@ -36,8 +38,16 @@ def plot_spectrogram(
     fig, ax = plt.subplots(subplot_kw={"projection": "3d"})
 
     # Plot the surface
-    X = np.arange(0, pipeline_romance._get_TIME_UPPER_BOUND(), pipeline_romance._get_TIME_INTERVAL())
-    Y = np.arange(0, pipeline_romance._get_FREQ_UPPER_BOUND(), pipeline_romance._get_FREQ_INTERVAL())
+    X = np.arange(
+        0,
+        pipeline_romance._get_TIME_UPPER_BOUND(),
+        pipeline_romance._get_TIME_INTERVAL(),
+    )
+    Y = np.arange(
+        0,
+        pipeline_romance._get_FREQ_UPPER_BOUND(),
+        pipeline_romance._get_FREQ_INTERVAL(),
+    )
     X, Y = np.meshgrid(X, Y)
 
     spect_arr = spect_arr.T
@@ -111,8 +121,16 @@ def plot_time_covariance(
     fig, ax = plt.subplots(subplot_kw={"projection": "3d"})
 
     # Plot the surface
-    X = np.arange(0, pipeline_romance._get_TIME_UPPER_BOUND(), pipeline_romance._get_TIME_INTERVAL())
-    Y = np.arange(0, pipeline_romance._get_TIME_UPPER_BOUND(), pipeline_romance._get_TIME_INTERVAL())
+    X = np.arange(
+        0,
+        pipeline_romance._get_TIME_UPPER_BOUND(),
+        pipeline_romance._get_TIME_INTERVAL(),
+    )
+    Y = np.arange(
+        0,
+        pipeline_romance._get_TIME_UPPER_BOUND(),
+        pipeline_romance._get_TIME_INTERVAL(),
+    )
     X, Y = np.meshgrid(X, Y)
 
     cov_arr = cov_arr.T
@@ -120,16 +138,28 @@ def plot_time_covariance(
     # Apply rotation if requested
     if rotate:
         surf = ax.plot_surface(
-            X, Y, cov_arr, cmap=cm.hsv_r, linewidth=0, antialiased=False,
-            vmin=-8, vmax=110,
+            X,
+            Y,
+            cov_arr,
+            cmap=cm.hsv_r,
+            linewidth=0,
+            antialiased=False,
+            vmin=-8,
+            vmax=110,
         )
         ax.set_xlabel("Time (standardized)")
         ax.set_ylabel("Time (standardized)")
         plt.title("Covariance")
     else:
         surf = ax.plot_surface(
-            Y, X, cov_arr, cmap=cm.hsv_r, linewidth=0, antialiased=False,
-            vmin=-8, vmax=110,
+            Y,
+            X,
+            cov_arr,
+            cmap=cm.hsv_r,
+            linewidth=0,
+            antialiased=False,
+            vmin=-8,
+            vmax=110,
         )
         ax.set_xlabel("Time (standardized)")
         ax.set_ylabel("Time (standardized)")
@@ -170,8 +200,16 @@ def plot_freq_covariance(
     fig, ax = plt.subplots(subplot_kw={"projection": "3d"})
 
     # Plot the surface
-    X = np.arange(0, pipeline_romance._get_FREQ_UPPER_BOUND(), pipeline_romance._get_FREQ_INTERVAL())
-    Y = np.arange(0, pipeline_romance._get_FREQ_UPPER_BOUND(), pipeline_romance._get_FREQ_INTERVAL())
+    X = np.arange(
+        0,
+        pipeline_romance._get_FREQ_UPPER_BOUND(),
+        pipeline_romance._get_FREQ_INTERVAL(),
+    )
+    Y = np.arange(
+        0,
+        pipeline_romance._get_FREQ_UPPER_BOUND(),
+        pipeline_romance._get_FREQ_INTERVAL(),
+    )
     X, Y = np.meshgrid(X, Y)
 
     cov_arr = cov_arr.T
@@ -179,16 +217,28 @@ def plot_freq_covariance(
     # Apply rotation if requested
     if rotate:
         surf = ax.plot_surface(
-            X, Y, cov_arr, cmap=cm.hsv_r, linewidth=0, antialiased=False,
-            vmin=-8, vmax=110,
+            X,
+            Y,
+            cov_arr,
+            cmap=cm.hsv_r,
+            linewidth=0,
+            antialiased=False,
+            vmin=-8,
+            vmax=110,
         )
         ax.set_xlabel("Frequency (Hz)")
         ax.set_ylabel("Frequency (Hz)")
         plt.title("Covariance")
     else:
         surf = ax.plot_surface(
-            Y, X, cov_arr, cmap=cm.hsv_r, linewidth=0, antialiased=False,
-            vmin=-8, vmax=110,
+            Y,
+            X,
+            cov_arr,
+            cmap=cm.hsv_r,
+            linewidth=0,
+            antialiased=False,
+            vmin=-8,
+            vmax=110,
         )
         ax.set_xlabel("Frequency (Hz)")
         ax.set_ylabel("Frequency (Hz)")
@@ -750,3 +800,225 @@ def plot_aligned_digit_centroids(
 
     ax.set_aspect("equal", adjustable="box")
     plt.show()
+
+
+def plot_heatmap(
+    dist_dict: dict,
+    title: str,
+):
+    """Generates a heatmap of distances in a given language family.
+
+    Args:
+        dist_dict (dict): A dictionary of language distances of the following form:
+
+        {
+            "lang1": {
+                "lang1": None,
+                "lang2": <float dist>,
+                "lang3": <float dist>,
+            },
+            "lang2": {
+                "lang1": <float dist>,
+                "lang2": None,
+                "lang3": <float dist>,
+            }
+            ...
+        }
+
+        title (str): The title of the plot.
+    """
+    data = np.array(
+        [
+            [x if x is not None else np.nan for x in v.values()]
+            for v in dist_dict.values()
+        ]
+    )
+
+    ax = (
+        heatmap(
+            data,
+            cmap=color_palette("Blues", as_cmap=True),
+            xticklabels=list(dist_dict.keys()),
+            yticklabels=list(dist_dict.keys()),
+            annot=True,
+            fmt=".3f",
+        ),
+    )
+
+    plt.title(
+        title,
+    )
+
+    plt.show()
+
+
+def minmax_scale_dict(
+    d: dict,
+):
+    """Applies minmax scaling to a dictionary of distances.
+
+    Args:
+        d (dict): A dictionary of dictionaries that takes the following form:
+
+        {
+            "lang1": {
+                "lang1": None,
+                "lang2": <float dist>,
+                "lang3": <float dist>,
+            },
+            "lang2": {
+                "lang1": <float dist>,
+                "lang2": None,
+                "lang3": <float dist>,
+            }
+            ...
+        }
+
+    Returns:
+        dict: The dictionary with minmax scaling applied.
+    """
+    vals = np.array(
+        [[x for x in subdict.values() if x is not None] for subdict in d.values()]
+    ).reshape(
+        -1,
+    )
+
+    lang_min = np.min(vals)
+    lang_max = np.max(vals)
+
+    ret_d = deepcopy(d)
+
+    for subdict in ret_d.values():
+        for lang in subdict:
+            if subdict[lang] is not None:
+                subdict[lang] = (subdict[lang] - lang_min) / (lang_max - lang_min)
+            else:
+                subdict[lang] = np.nan
+
+    return ret_d
+
+
+def get_mse(
+    covar_dict: dict,
+    poincare_dict: dict,
+):
+    """Gets the error between two distance dictionaries.
+
+    Args:
+        covar_dict (dict): A dictionary of Procrustes distances.
+        poincare_dict (dict): A dictionary of Poincaré distances.
+
+        The dictionaries should have the following form:
+
+        {
+            "lang1": {
+                "lang1": None,
+                "lang2": <float dist>,
+                "lang3": <float dist>,
+            },
+            "lang2": {
+                "lang1": <float dist>,
+                "lang2": None,
+                "lang3": <float dist>,
+            }
+            ...
+        }
+
+    Returns:
+        float: The error between the sets of distances.
+    """
+    covar_langs = list(covar_dict.keys())
+    poincare_langs = list(poincare_dict.keys())
+
+    if covar_langs != poincare_langs:
+        raise Exception("Make sure dicts contain the same languages")
+
+    count = 0
+    total_squared_err = 0
+
+    for i in range(len(covar_langs)):
+        for j in range(i, len(poincare_langs)):
+            lang_a = covar_langs[i]
+            lang_b = poincare_langs[j]
+
+            if lang_a != lang_b:
+                total_squared_err += (
+                    covar_dict[lang_a][lang_b] - poincare_dict[lang_a][lang_b]
+                ) ** 2
+                count += 1
+
+    return total_squared_err / count
+
+
+def compare_lang_space_divergence(
+    cov_dist_dict: dict,
+    poincare_dist_dict,
+    hyperparam_range: range,
+    title: str,
+):
+    """Compares the divergence between a Procrustes and Poincaré language space.
+
+    Args:
+        cov_dist_dict (dict): A dictionary of Procrustes distances.
+        poincare_dist_dict (dict):  A dictionary of Poincaré distances.
+        hyperparam_range (range): A range of k values for which the divergences will be tested.
+        title (str): The title of the resulting plot.
+
+        cov_dist_dict should have the following form:
+
+        {
+            "lang1": {
+                "lang1": None,
+                "lang2": <float dist>,
+                "lang3": <float dist>,
+            },
+            "lang2": {
+                "lang1": <float dist>,
+                "lang2": None,
+                "lang3": <float dist>,
+            }
+            ...
+        }
+
+        poincare_dist_dict should have the following form:
+
+        {
+            <integer k value>: {
+                "lang1": {
+                    "lang1": None,
+                    "lang2": <float dist>,
+                    "lang3": <float dist>,
+                },
+                "lang2": {
+                    "lang1": <float dist>,
+                    "lang2": None,
+                    "lang3": <float dist>,
+                }
+                ...
+            }
+            ...
+        }
+    """
+    mse_arr = []
+
+    for k in hyperparam_range:
+        mse_arr.append(
+            get_mse(
+                covar_dict=minmax_scale_dict(cov_dist_dict),
+                poincare_dict=minmax_scale_dict(poincare_dist_dict.get(k)),
+            )
+        )
+
+    plt.scatter([x for x in range(len(mse_arr))], mse_arr)
+    plt.plot(
+        [np.mean(mse_arr) for _ in range(len(mse_arr))], ":", color="r", label="Average"
+    )
+    plt.title(
+        title,
+    )
+    plt.xlabel("k")
+    plt.xticks(
+        ticks=[x for x in range(len(mse_arr))], labels=[x for x in hyperparam_range]
+    )
+    plt.ylabel("Divergence")
+    plt.legend()
